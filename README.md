@@ -324,20 +324,9 @@ Sports
 ```
 
 ---
+## 💻 Dashboard Preview
 
-# 🖥️ Dashboard Preview
-
-> Add your Streamlit dashboard screenshot here.
-
-```text
-docs/images/dashboard.png
-```
-
-After adding the screenshot to the repository, use:
-
-```markdown
 ![E-Commerce Analytics Dashboard](docs/images/dashboard.png)
-```
 
 ---
 
