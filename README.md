@@ -1,1034 +1,652 @@
-\# 🛒 E-Commerce ETL \& Analytics Pipeline
+# 🛒 E-Commerce ETL & Analytics Platform
 
+> **End-to-end batch data engineering pipeline built with Python, PySpark, PostgreSQL, Apache Airflow, Docker, and Streamlit.**
 
+[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](https://www.python.org/)
+[![PySpark](https://img.shields.io/badge/PySpark-4.2-orange?logo=apachespark&logoColor=white)](https://spark.apache.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Airflow](https://img.shields.io/badge/Apache%20Airflow-2.10.5-017CEE?logo=apacheairflow&logoColor=white)](https://airflow.apache.org/)
+[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
 
-An end-to-end data engineering project that simulates an e-commerce data platform and processes transactional data through a complete ETL pipeline using \*\*Python, PySpark, PostgreSQL, Apache Airflow, and Streamlit\*\*.
+---
 
+## 📌 Overview
 
+This project implements a complete **e-commerce batch ETL and analytics platform** from raw data generation to business visualization.
 
-The project generates realistic e-commerce data, introduces intentional data-quality issues, cleans and transforms the data using PySpark, loads it into PostgreSQL, builds an analytical data model, orchestrates the workflow with Airflow, and exposes business insights through an interactive Streamlit dashboard.
+The pipeline:
 
+- Generates realistic synthetic e-commerce transactions
+- Introduces intentional data-quality issues
+- Profiles and validates raw data
+- Cleans data using **PySpark**
+- Stores curated data as **Parquet**
+- Loads processed data into **PostgreSQL**
+- Builds a dimensional analytics model
+- Creates reusable analytical SQL views
+- Orchestrates the workflow with **Apache Airflow**
+- Provides an interactive **Streamlit + Plotly dashboard**
 
+The goal was to build a realistic data engineering workflow rather than a collection of isolated scripts.
 
-\---
+---
 
+## 🏗️ Architecture
 
+```mermaid
+flowchart LR
 
-\## 🚀 Project Overview
+    A["Python + Faker<br/>Synthetic Data"]
+    B["Raw CSV<br/>Customers • Products • Orders"]
+    C["PySpark<br/>Profiling + Cleaning"]
+    D["Processed<br/>Parquet"]
+    E["PostgreSQL<br/>Staging"]
+    F["Analytics Model<br/>Facts + Dimensions"]
+    G["SQL Views<br/>Business Metrics"]
+    H["Streamlit<br/>Analytics Dashboard"]
 
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+    E --> F
+    F --> G
+    G --> H
 
+    X["Apache Airflow"]
+    X -. orchestrates .-> A
+    X -. orchestrates .-> C
+    X -. orchestrates .-> E
+    X -. orchestrates .-> F
+    X -. orchestrates .-> G
+```
 
-This project demonstrates a production-style batch data engineering workflow:
+---
 
+# ⚡ What I Built
 
+### 1. Synthetic Data Generation
+
+Generated realistic e-commerce data using **Python + Faker** across five datasets:
 
 ```text
-
-Synthetic E-Commerce Data
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;    Python / Faker
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;     Raw CSV Files
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;      PySpark
-
-&#x20;  Data Cleaning \& QA
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;   Processed Parquet
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;     PostgreSQL
-
-&#x20;  ┌───────────────┐
-
-&#x20;  │   Staging     │
-
-&#x20;  │   Analytics   │
-
-&#x20;  └───────────────┘
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;  Analytics Views
-
-&#x20;         │
-
-&#x20;         ▼
-
-&#x20;     Streamlit
-
-&#x20;     Dashboard
-
-
-
-🧰 Tech Stack
-
-Technology	Purpose
-
-Python	Data generation and pipeline logic
-
-Faker	Synthetic e-commerce data generation
-
-PySpark	Data cleaning and transformation
-
-Parquet	Processed data storage
-
-PostgreSQL	Data warehouse / analytical database
-
-Apache Airflow	ETL orchestration
-
-Streamlit	Interactive analytics dashboard
-
-Plotly	Data visualization
-
-Docker	Containerized PostgreSQL and Airflow
-
-Git	Version control
-
-📊 Dataset
-
-
-
-The pipeline generates five datasets:
-
-
-
 Customers
-
-
-
-Contains customer information.
-
-
-
-Customer ID
-
-Name
-
-Email
-
-Phone
-
-Registration date
-
-City
-
-Country
-
 Products
-
-
-
-Contains product catalog information.
-
-
-
-Product ID
-
-Product name
-
-Category
-
-Price
-
 Orders
-
-
-
-Contains customer order information.
-
-
-
-Order ID
-
-Customer ID
-
-Order date
-
-Order status
-
-Total amount
-
 Order Items
-
-
-
-Contains individual products within each order.
-
-
-
-Order item ID
-
-Order ID
-
-Product ID
-
-Quantity
-
-Unit price
-
-Line total
-
 Payments
+```
 
+Example pipeline dataset:
 
+| Dataset | Records |
+|---|---:|
+| Customers | 1,000 |
+| Products | 200 |
+| Orders | 5,000 |
+| Order Items | 14,923 |
+| Payments | 4,432 |
 
-Contains payment information.
+---
 
+### 2. Data Quality Engineering
 
+Instead of generating perfectly clean data, the pipeline intentionally introduces common data-quality problems.
 
-Payment ID
+Examples:
 
-Order ID
+- Duplicate customer records
+- Missing customer emails
+- Invalid email formats
+- Invalid order-item quantities
+- Different order statuses
+- Orders without corresponding payments
 
-Payment date
+---
 
-Payment method
+### 3. PySpark Transformation
 
-Payment status
+PySpark is used to transform the raw CSV data into curated Parquet datasets.
 
-🧪 Intentional Data Quality Issues
+#### Customer cleaning
 
+```text
+Duplicate customers
+        ↓
+Deduplicate by customer_id
+        ↓
+Normalize email
+        ↓
+Validate email format
+        ↓
+Invalid email → NULL
+```
 
+#### Order-item cleaning
 
-The generated dataset intentionally contains data-quality problems to demonstrate real-world ETL processing.
+```text
+Raw order items
+        ↓
+Validate quantity
+        ↓
+Remove quantity <= 0
+        ↓
+Curated order items
+```
 
+Cancelled orders without payments are retained because they represent a valid business scenario rather than automatically being treated as corrupt data.
 
+---
 
-Customers
+# 🗄️ Data Warehouse Model
 
-Duplicate customer records
+The PostgreSQL database is organized into two layers.
 
-Missing email addresses
+## Staging Layer
 
-Invalid email formats
-
-Order Items
-
-Invalid quantities such as 0
-
-Orders
-
-Different order statuses
-
-Cancelled orders without payments
-
-
-
-Cancelled orders without payments are treated as valid business scenarios rather than data-quality errors.
-
-
-
-🔍 Data Quality Checks
-
-
-
-The pipeline performs checks including:
-
-
-
-Duplicate customer IDs
-
-Missing emails
-
-Invalid email formats
-
-Invalid quantities
-
-Invalid prices
-
-Referential integrity
-
-Orders without payments
-
-Payment status distribution
-
-
-
-Example payment distribution from the generated dataset:
-
-
-
-Success : 3,293
-
-Failed  : 1,139
-
-
-
-The generated data is synthetic and may change when the pipeline is executed again.
-
-
-
-🧹 PySpark Data Cleaning
-
-
-
-The raw CSV data is processed using PySpark.
-
-
-
-Customer cleaning
-
-Remove duplicate customer IDs
-
-Normalize email values
-
-Convert invalid email addresses to NULL
-
-Order item cleaning
-
-
-
-Rows with:
-
-
-
-quantity <= 0
-
-
-
-are removed.
-
-
-
-Business rule
-
-
-
-Cancelled orders without payments are retained because they represent a valid business scenario.
-
-
-
-🗄️ PostgreSQL Data Model
-
-
-
-The PostgreSQL database contains two major layers.
-
-
-
-Staging
-
+```text
 staging.customers
-
 staging.products
-
 staging.orders
-
-staging.order\_items
-
+staging.order_items
 staging.payments
-
-
-
-The staging layer stores cleaned transactional data before analytical transformation.
-
-
-
-⭐ Analytics Model
-
-
-
-The analytical layer follows a simplified dimensional model.
-
-
-
-Dimension Tables
-
-analytics.dim\_customers
-
-analytics.dim\_products
-
-Fact Tables
-
-analytics.fact\_orders
-
-analytics.fact\_order\_items
-
-
-
-This structure supports analytical queries while separating descriptive dimensions from transactional facts.
-
-
-
-📈 Analytics Views
-
-
-
-The project provides analytical views for the dashboard.
-
-
-
-analytics.v\_daily\_sales
-
-analytics.v\_category\_sales
-
-analytics.v\_product\_sales
-
-
-
-These views provide:
-
-
-
-Daily revenue
-
-Daily order counts
-
-Units sold
-
-Category revenue
-
-Category order counts
-
-Product revenue
-
-
-
-Cancelled orders are excluded from revenue-oriented analytical views.
-
-
-
-🔄 Apache Airflow Pipeline
-
-
-
-The entire ETL workflow is orchestrated using Apache Airflow.
-
-
-
-DAG
-
-ecommerce\_etl
-
-Tasks
-
-generate\_data
-
-&#x20;     ↓
-
-clean\_data\_with\_pyspark
-
-&#x20;     ↓
-
-load\_parquet\_to\_postgres
-
-&#x20;     ↓
-
-transform\_analytics
-
-&#x20;     ↓
-
-create\_dashboard\_views
-
-
+```
+
+The staging layer contains the cleaned transactional datasets.
+
+## Analytics Layer
+
+### Dimensions
+
+```text
+dim_customers
+dim_products
+```
+
+### Facts
+
+```text
+fact_orders
+fact_order_items
+```
+
+Conceptually:
+
+```mermaid
+erDiagram
+
+    DIM_CUSTOMERS ||--o{ FACT_ORDERS : places
+    FACT_ORDERS ||--o{ FACT_ORDER_ITEMS : contains
+    DIM_PRODUCTS ||--o{ FACT_ORDER_ITEMS : includes
+
+    DIM_CUSTOMERS {
+        int customer_id PK
+        string name
+        string email
+    }
+
+    DIM_PRODUCTS {
+        int product_id PK
+        string product_name
+        string category
+        decimal price
+    }
+
+    FACT_ORDERS {
+        int order_id PK
+        int customer_id FK
+        date order_date
+        string status
+        decimal total_amount
+    }
+
+    FACT_ORDER_ITEMS {
+        int order_item_id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        decimal line_total
+    }
+```
+
+---
+
+# 🔄 Airflow ETL Workflow
+
+The complete workflow is orchestrated using Apache Airflow.
+
+### DAG
+
+```text
+ecommerce_etl
+```
+
+### Pipeline
+
+```text
+┌─────────────────────────────┐
+│      generate_data          │
+│      Python + Faker         │
+└──────────────┬──────────────┘
+               ↓
+┌─────────────────────────────┐
+│ clean_data_with_pyspark     │
+│ Data Quality + Transformation│
+└──────────────┬──────────────┘
+               ↓
+┌─────────────────────────────┐
+│   load_parquet_to_postgres  │
+│      PostgreSQL Staging     │
+└──────────────┬──────────────┘
+               ↓
+┌─────────────────────────────┐
+│     transform_analytics     │
+│     Facts + Dimensions      │
+└──────────────┬──────────────┘
+               ↓
+┌─────────────────────────────┐
+│    create_dashboard_views   │
+│       Business Metrics      │
+└─────────────────────────────┘
+```
 
 The DAG is configured for daily execution.
 
+---
 
+# 📊 Analytics Layer
 
-⚙️ Airflow Environment
+The project exposes reusable SQL views for analytical workloads.
 
+```text
+analytics.v_daily_sales
+analytics.v_category_sales
+analytics.v_product_sales
+```
 
+These provide:
 
-Airflow runs using Docker with:
+- Daily revenue
+- Daily order counts
+- Units sold
+- Category revenue
+- Category order counts
+- Product revenue
 
+Cancelled orders are excluded from revenue-oriented analytics.
 
+---
 
-Apache Airflow 2.10.5
+# 📈 Streamlit Dashboard
 
-PostgreSQL metadata database
+The processed analytics are exposed through an interactive Streamlit dashboard.
 
-LocalExecutor
+### Dashboard KPIs
 
-OpenJDK 17
+```text
+┌────────────────┬──────────────────┬─────────────────┐
+│ Total Orders   │ Completed Orders │ Cancelled Orders│
+│     5,000      │      2,526       │       828       │
+└────────────────┴──────────────────┴─────────────────┘
+```
 
-PySpark 4.2.0
+Additional KPIs:
 
-pandas
+- Revenue
+- Average Order Value
 
-PyArrow
+### Visualizations
 
-psycopg2
+📊 Revenue by Category
 
-Faker
+🥧 Units Sold Distribution
 
-📊 Streamlit Dashboard
+📈 Daily Revenue Trend
 
+📊 Order Status Distribution
 
+🏆 Top 10 Products by Revenue
 
-The project includes an interactive Streamlit dashboard.
+📋 Category Performance
 
+### Dashboard Filtering
 
+The dashboard supports filtering by:
 
-Dashboard KPIs
+```text
+Clothing
+Electronics
+Books
+Home & Kitchen
+Beauty
+Sports
+```
 
-Total Orders
+---
 
-Completed Orders
+# 🖥️ Dashboard Preview
 
-Cancelled Orders
+> Add your Streamlit dashboard screenshot here.
 
-Revenue
+```text
+docs/images/dashboard.png
+```
 
-Average Order Value
+After adding the screenshot to the repository, use:
 
-Visualizations
+```markdown
+![E-Commerce Analytics Dashboard](docs/images/dashboard.png)
+```
 
-Revenue by category
+---
 
-Units sold by category
+# 📊 Pipeline Results
 
-Daily revenue trend
+One successful pipeline execution produced:
 
-Order status distribution
+| Metric | Result |
+|---|---:|
+| Customers | 1,000 |
+| Products | 200 |
+| Orders | 5,000 |
+| Order Items | 14,923 |
+| Payments | 4,432 |
 
-Top 10 products by revenue
+### Order Status
 
-Category performance table
+| Status | Orders |
+|---|---:|
+| Completed | 2,526 |
+| Cancelled | 828 |
+| Processing | 824 |
+| Shipped | 822 |
 
-Filters
+---
 
+# ✅ Data Validation
 
+The analytical layer was independently validated against the underlying fact table.
 
-Users can filter the dashboard by product category.
+### Category View Revenue
 
-
-
-✅ Pipeline Validation
-
-
-
-The pipeline was validated using independent revenue calculations.
-
-
-
-The revenue calculated from the category analytics view:
-
-
-
+```text
 ₹918,723,381.34
+```
 
+### Fact Table Revenue
 
-
-matches the revenue independently calculated from the fact table:
-
-
-
+```text
 ₹918,723,381.34
+```
 
+### Difference
 
-
-Difference:
-
-
-
+```text
 ₹0.00
+```
 
+This confirms that the revenue exposed through the category analytics view is consistent with the underlying order fact table.
 
+---
 
-This validates the consistency between the analytical view and the underlying fact table.
+# 🧪 Data Quality Checks
 
+The pipeline includes checks for:
 
+| Check | Handling |
+|---|---|
+| Duplicate customers | Deduplicated |
+| Missing emails | Converted to NULL |
+| Invalid email formats | Converted to NULL |
+| Invalid quantities | Removed |
+| Invalid prices | Validated |
+| Referential integrity | Validated |
+| Orders without payments | Investigated |
+| Payment status | Profiled |
 
-📌 Example Dataset Metrics
+---
 
+# 🛠️ Technology Stack
 
+| Technology | Role |
+|---|---|
+| **Python** | Data generation & pipeline logic |
+| **Faker** | Synthetic data generation |
+| **PySpark** | Data cleaning & transformation |
+| **Parquet** | Curated data storage |
+| **PostgreSQL** | Staging & analytics database |
+| **Apache Airflow** | Pipeline orchestration |
+| **Docker** | Containerization |
+| **Streamlit** | Analytics dashboard |
+| **Plotly** | Data visualization |
+| **Git** | Version control |
 
-One successful pipeline run produced:
+---
 
+# 📁 Project Structure
 
-
-Customers       : 1,000
-
-Products        : 200
-
-Orders          : 5,000
-
-Order Items     : 14,923
-
-Payments        : 4,432
-
-
-
-Example order-status distribution:
-
-
-
-Completed       : 2,526
-
-Cancelled       :   828
-
-Processing      :   824
-
-Shipped         :   822
-
-
-
-Because the pipeline generates synthetic data, these values can change when the pipeline is executed again.
-
-
-
-📁 Project Structure
-
+```text
 E-commerce ETL Pipeline/
-
 │
-
 ├── dags/
-
-│   └── ecommerce\_etl.py
-
+│   └── ecommerce_etl.py
 │
-
 ├── data/
-
 │   ├── raw/
-
 │   └── processed/
-
 │
-
 ├── hadoop/
-
 │   └── bin/
-
 │       ├── hadoop.dll
-
 │       ├── hdfs.dll
-
 │       └── winutils.exe
-
 │
-
 ├── notebooks/
-
 │
-
 ├── sql/
-
 │   ├── staging/
-
-│   │   ├── 01\_create\_schemas.sql
-
-│   │   └── 02\_create\_staging\_tables.sql
-
+│   │   ├── 01_create_schemas.sql
+│   │   └── 02_create_staging_tables.sql
 │   │
-
 │   └── analytics/
-
-│       ├── 01\_create\_analytics\_tables.sql
-
-│       ├── 02\_transform\_analytics.sql
-
-│       ├── 03\_business\_queries.sql
-
-│       └── 04\_dashboard\_views.sql
-
+│       ├── 01_create_analytics_tables.sql
+│       ├── 02_transform_analytics.sql
+│       ├── 03_business_queries.sql
+│       └── 04_dashboard_views.sql
 │
-
 ├── src/
-
 │   ├── dashboard/
-
 │   │   └── app.py
-
 │   │
-
 │   ├── ingestion/
-
 │   │
-
 │   ├── loading/
-
-│   │   └── load\_to\_postgres.py
-
+│   │   └── load_to_postgres.py
 │   │
-
 │   ├── transformations/
-
-│   │   └── clean\_data.py
-
+│   │   └── clean_data.py
 │   │
-
-│   ├── data\_quality.py
-
+│   ├── data_quality.py
 │   ├── profiling.py
-
-│   └── generate\_data.py
-
+│   └── generate_data.py
 │
-
 ├── tests/
-
 │
-
 ├── Dockerfile.airflow
-
 ├── docker-compose.airflow.yml
-
 ├── requirements.txt
-
 ├── .gitignore
-
 └── README.md
+```
 
-🐳 Docker Services
+---
 
+# 🚀 Getting Started
 
+## Prerequisites
 
-The project uses Docker for PostgreSQL and Airflow.
+- Python 3.12+
+- Java 17
+- Docker Desktop
+- Git
 
+## 1. Clone the Repository
 
-
-PostgreSQL
-
-Database : ecommerce
-
-User     : etl\_user
-
-Port     : 5432
-
-Airflow
-
-Web UI : http://localhost:8080
-
-
-
-Airflow credentials for the local development environment:
-
-
-
-Username : admin
-
-Password : admin
-
-
-
-These credentials are intended only for local development.
-
-
-
-⚙️ Local Setup
-
-
-
-1\. Clone the repository
-
-git clone <YOUR\_GITHUB\_REPOSITORY\_URL>
-
+```bash
+git clone <YOUR_GITHUB_REPOSITORY_URL>
 cd E-commerce-ETL-Pipeline
+```
 
-2\. Create a Python virtual environment
+## 2. Create Virtual Environment
 
+### Windows
+
+```powershell
 python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+```
 
+## 3. Install Dependencies
 
-
-Activate it:
-
-
-
-.\\.venv\\Scripts\\Activate.ps1
-
-3\. Install dependencies
-
+```powershell
 pip install -r requirements.txt
+```
 
-🐘 PostgreSQL Setup
+---
 
+# 🐘 PostgreSQL
 
+Start the PostgreSQL container:
 
-Start the PostgreSQL container.
-
-
-
+```powershell
 docker start ecommerce-postgres
-
-
+```
 
 Verify:
 
-
-
+```powershell
 docker ps
+```
 
+Check database connectivity:
 
+```powershell
+docker exec ecommerce-postgres pg_isready -U etl_user -d ecommerce
+```
 
-Test PostgreSQL:
+---
 
+# ✈️ Airflow
 
+Build the Airflow environment:
 
-docker exec ecommerce-postgres pg\_isready -U etl\_user -d ecommerce
-
-✈️ Start Airflow
-
-
-
-Build the Airflow image:
-
-
-
+```powershell
 docker compose -f docker-compose.airflow.yml build
-
-
+```
 
 Start Airflow:
 
-
-
+```powershell
 docker compose -f docker-compose.airflow.yml up -d
-
-
+```
 
 Open:
 
-
-
+```text
 http://localhost:8080
+```
 
+Trigger the:
 
+```text
+ecommerce_etl
+```
 
-Login using the local development credentials configured in the Compose file.
+DAG from the Airflow UI.
 
+---
 
+# 📊 Streamlit Dashboard
 
-▶️ Run the ETL Pipeline
+Run:
 
-
-
-The Airflow DAG:
-
-
-
-ecommerce\_etl
-
-
-
-can be triggered from the Airflow UI.
-
-
-
-Pipeline:
-
-
-
-Generate Data
-
-&#x20;     ↓
-
-PySpark Cleaning
-
-&#x20;     ↓
-
-Load to PostgreSQL
-
-&#x20;     ↓
-
-Transform Analytics
-
-&#x20;     ↓
-
-Create Dashboard Views
-
-
-
-📊 Run the Dashboard
-
-
-
-From the project root:
-
-
-
-streamlit run src\\dashboard\\app.py
-
-
+```powershell
+streamlit run src\dashboard\app.py
+```
 
 Open:
 
-
-
+```text
 http://localhost:8501
+```
 
+---
 
+# 🔐 Environment Configuration
 
-🔐 Configuration
+Database configuration supports:
 
-
-
-Database settings can be configured through environment variables:
-
-
-
+```text
 PGHOST
-
 PGPORT
-
 PGDATABASE
-
 PGUSER
-
 PGPASSWORD
+```
 
+For production deployments, credentials should be managed using environment variables or a secrets manager.
 
+---
 
-Default local-development values are configured in the application.
+# 🎯 Engineering Concepts
 
+This project covers:
 
+- Batch ETL
+- Data ingestion
+- Data profiling
+- Data quality
+- Data cleaning
+- PySpark transformations
+- Parquet
+- PostgreSQL
+- Fact and dimension modeling
+- Analytical SQL
+- SQL views
+- Airflow orchestration
+- Docker
+- Data validation
+- Business analytics
+- Interactive dashboards
 
-For production deployments, credentials should be supplied through environment variables or a secrets manager rather than committed to source control.
+---
 
+# 🔮 Future Improvements
 
+- [ ] Incremental ETL processing
+- [ ] Slowly Changing Dimensions
+- [ ] Automated testing
+- [ ] Data quality framework
+- [ ] dbt transformation layer
+- [ ] CI/CD pipeline
+- [ ] Cloud Storage integration
+- [ ] BigQuery warehouse
+- [ ] Pub/Sub streaming ingestion
+- [ ] GCP deployment
+- [ ] Monitoring and alerting
+- [ ] Production secrets management
 
-🧠 Key Data Engineering Concepts Demonstrated
+---
 
+# 👨‍💻 Author
 
+## Peruri Subhash
 
-This project demonstrates practical experience with:
+**Data Engineer | GCP | PySpark | SQL | Airflow**
 
+Building data pipelines, analytics systems, and cloud-based data engineering solutions.
 
+---
 
-Batch ETL pipelines
-
-Data ingestion
-
-Data profiling
-
-Data-quality validation
-
-Data cleaning
-
-PySpark transformations
-
-Parquet
-
-PostgreSQL
-
-Dimensional modeling
-
-Fact and dimension tables
-
-Analytical SQL
-
-SQL views
-
-Workflow orchestration
-
-Apache Airflow
-
-Docker
-
-Streamlit
-
-Plotly
-
-Data validation
-
-Business analytics
-
-
-
-
-
-🔮 Future Improvements
-
-
-
-Potential future enhancements include:
-
-
-
-Incremental data loading
-
-Slowly Changing Dimensions
-
-Cloud deployment on GCP
-
-BigQuery integration
-
-Cloud Storage data lake
-
-Pub/Sub streaming ingestion
-
-Data quality framework integration
-
-Great Expectations
-
-dbt transformations
-
-CI/CD pipeline
-
-Automated unit and integration tests
-
-Authentication for the dashboard
-
-Production secrets management
-
-Monitoring and alerting
-
-
-
-👨‍💻 Author
-
-
-
-Peruri Subhash
-
-
-
-Data Engineer | GCP | PySpark | SQL | Airflow
-
-
-
-Interested in building scalable data pipelines, analytics systems, and cloud-based data engineering solutions.
-
-
-
-⭐ Project Highlights
-
-Python
-
-&#x20;  +
-
-PySpark
-
-&#x20;  +
-
-PostgreSQL
-
-&#x20;  +
-
-Apache Airflow
-
-&#x20;  +
-
-Docker
-
-&#x20;  +
-
-Streamlit
-
-
-
+⭐ **End-to-end data engineering project — from raw transactions to business insights.**
